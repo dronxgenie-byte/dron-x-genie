@@ -45,15 +45,18 @@ if ($conn) {
         $conn = Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue
         if ($conn) {
             Write-Result "Port 8000 freed" $false "Still busy: PID $($conn.OwningProcess)"
-        } else {
+        }
+        else {
             Write-Result "Port 8000 freed" $true
         }
-    } else {
+    }
+    else {
         # Process is dead but socket lingers (orphaned). Windows will release it.
         Write-Host "Port 8000 has orphaned socket (process $($conn.OwningProcess) is dead). Windows will release it." -ForegroundColor Yellow
         Write-Result "Port 8000 free" $true "Orphaned socket - will be released by kernel"
     }
-} else {
+}
+else {
     Write-Result "Port 8000 free" $true
 }
 
@@ -61,7 +64,8 @@ if (-not (Test-Path $InstallerPath -PathType Leaf)) {
     Write-Result "Installer exists" $false "Not found: $InstallerPath"
     Write-Host "Stopping." -ForegroundColor Red
     exit 1
-} else {
+}
+else {
     Write-Result "Installer exists" $true "$InstallerPath ($(Get-Item $InstallerPath).Length bytes)"
 }
 
@@ -73,7 +77,8 @@ Write-Section "1. Cleaning up old installation"
 if (Test-Path $InstallRoot) {
     Remove-Item $InstallRoot -Recurse -Force -ErrorAction SilentlyContinue
     Write-Result "Old folder removed" $true "$InstallRoot"
-} else {
+}
+else {
     Write-Result "Old folder absent" $true "Nothing to remove"
 }
 
@@ -93,7 +98,8 @@ $installExitCode = $installProc.ExitCode
 
 if ($installExitCode -eq 0) {
     Write-Result "Install completed" $true "exit code = 0"
-} else {
+}
+else {
     Write-Result "Install failed" $false "exit code = $installExitCode"
 }
 
@@ -127,7 +133,8 @@ foreach ($f in $expectedFiles) {
     $exists = Test-Path $f -PathType Leaf
     if (-not $exists) {
         Write-Result "File: $([System.IO.Path]::GetFileName($f))" $false "Missing: $f"
-    } else {
+    }
+    else {
         Write-Result "File: $([System.IO.Path]::GetFileName($f))" $true
     }
 }
@@ -139,7 +146,7 @@ if (Test-Path $startMenuLnk -PathType Leaf) {
     $ws = New-Object -ComObject WScript.Shell
     $shortcut = $ws.CreateShortcut($startMenuLnk)
     $target = $shortcut.TargetPath
-    $workdir  = $shortcut.WorkingDirectory
+    $workdir = $shortcut.WorkingDirectory
     Write-Result "Shortcut Target exists" (Test-Path $target -PathType Leaf) "Target: $target"
     Write-Result "Shortcut WorkingDir" (Test-Path $workdir -PathType Container) "WorkDir: $workdir"
 }
@@ -156,7 +163,8 @@ $setupExitCode = $setupProc.ExitCode
 
 if ($setupExitCode -eq 0) {
     Write-Result "setup_env.ps1 completed" $true "exit code = 0"
-} else {
+}
+else {
     Write-Result "setup_env.ps1 failed" $false "exit code = $setupExitCode, see $setupLog"
 }
 
@@ -167,7 +175,8 @@ if (Test-Path $setupLog) {
     $setupErrors = Select-String -Path $setupLog -Pattern "ERROR|WinError 5|Cannot uninstall|no RECORD" -ErrorAction SilentlyContinue
     if ($setupErrors) {
         Write-Result "No critical install errors" $false "Found: $($setupErrors | Select-Object -First 1 -ExpandProperty Line)"
-    } else {
+    }
+    else {
         Write-Result "No critical install errors" $true
     }
 }
@@ -192,7 +201,8 @@ if ($conns8000) {
     if ($allDead) {
         Write-Host "Port 8000 blocked by orphaned socket (dead process). Ignoring - kernel will release." -ForegroundColor Yellow
         Write-Result "Port 8000 free" $true "Orphaned socket - no live process"
-    } else {
+    }
+    else {
         $port8000Busy = $true
         Write-Host "Port 8000 busy (live PID). Killing..." -ForegroundColor Yellow
         foreach ($c in $conns8000) {
@@ -202,11 +212,13 @@ if ($conns8000) {
         $conns8000 = Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue
         if ($conns8000) {
             Write-Result "Port 8000 freed" $false "Still busy"
-        } else {
+        }
+        else {
             Write-Result "Port 8000 freed" $true
         }
     }
-} else {
+}
+else {
     Write-Result "Port 8000 free" $true
 }
 
@@ -237,17 +249,20 @@ if (-not $port8000Busy) {
             if ($respStatus -in @("ok", "degraded")) {
                 $healthOk = $true
                 break
-            } else {
+            }
+            else {
                 Write-Host "Health-check returned status: $respStatus" -ForegroundColor Yellow
             }
-        } catch {
+        }
+        catch {
             Write-Host "Health-check error: $($_.Exception.Message)" -ForegroundColor Yellow
         }
     }
 
     if ($healthOk) {
         Write-Result "Health-check /api/health" $true "Response: $response | < $HealthTimeout sec"
-    } else {
+    }
+    else {
         Write-Result "Health-check /api/health" $false "Backend not responding after $HealthTimeout sec"
     }
 
@@ -255,7 +270,8 @@ if (-not $port8000Busy) {
         $backendErrors = Select-String -Path $backendLogOut -Pattern "ImportError|ModuleNotFoundError|Traceback" -ErrorAction SilentlyContinue
         if ($backendErrors) {
             Write-Result "No import errors in backend" $false "Found: $($backendErrors | Select-Object -First 1 -ExpandProperty Line)"
-        } else {
+        }
+        else {
             Write-Result "No import errors in backend" $true
         }
     }
@@ -263,8 +279,10 @@ if (-not $port8000Busy) {
     try {
         Stop-Process -Id $backendProc.Id -Force -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 2
-    } catch {}
-} else {
+    }
+    catch {}
+}
+else {
     Write-Result "Health-check /api/health" $false "Skipped - port 8000 blocked by orphaned socket"
     Write-Result "No import errors in backend" $false "Skipped - port 8000 blocked by orphaned socket"
 }
@@ -272,20 +290,30 @@ if (-not $port8000Busy) {
 # ============================================================================
 # 6. Uninstall
 # ============================================================================
-Write-Section "6. Uninstall"
-
 $uninstaller = "$InstallRoot\uninstall.exe"
 if (Test-Path $uninstaller -PathType Leaf) {
+    # Запускаем деинсталлятор
     $uninstallProc = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru -NoNewWindow
     $uninstallExitCode = $uninstallProc.ExitCode
-
+    
     if ($uninstallExitCode -eq 0) {
         Write-Result "Uninstall completed" $true "exit code = 0"
-    } else {
+    }
+    else {
         Write-Result "Uninstall failed" $false "exit code = $uninstallExitCode"
     }
-} else {
+}
+else {
     Write-Result "Uninstaller found" $false "Not found: $uninstaller"
+}
+
+# =========================================================
+# Ожидание фонового удаления (чтобы папка успела исчезнуть)
+# =========================================================
+Write-Host "Waiting for NSIS uninstaller to finish in background..." -ForegroundColor Gray
+$timeout = (Get-Date).AddSeconds(15)
+while ((Test-Path -LiteralPath $InstallRoot) -and ((Get-Date) -lt $timeout)) {
+    Start-Sleep -Milliseconds 500
 }
 
 # ============================================================================
@@ -312,7 +340,7 @@ Write-Section "E2E SUMMARY"
 
 $passCount = ($results.Values | Where-Object { $_ -eq $true }).Count
 $failCount = ($results.Values | Where-Object { $_ -eq $false }).Count
-$total     = $results.Count
+$total = $results.Count
 
 Write-Host "Passed: $passCount / $total" -ForegroundColor Green
 $failColor = if ($failCount -gt 0) { "Red" } else { "Green" }
@@ -321,7 +349,8 @@ Write-Host "Failed: $failCount / $total" -ForegroundColor $failColor
 if ($failed) {
     Write-Host "E2E FAILED - there are failed steps." -ForegroundColor Red
     exit 1
-} else {
+}
+else {
     Write-Host "E2E PASSED - all steps successful." -ForegroundColor Green
     exit 0
 }
