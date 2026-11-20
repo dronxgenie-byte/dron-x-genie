@@ -165,7 +165,6 @@ if ($setupExitCode -eq 0) {
     Write-Result "setup_env.ps1 completed" $true "exit code = 0"
 }
 else {
-    +
     Write-Result "setup_env.ps1 failed" $false "exit code = $setupExitCode, see $setupLog"
 }
 
@@ -194,7 +193,10 @@ if ($conns8000) {
     $allDead = $true
     foreach ($c in $conns8000) {
         $proc = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
-        if ($proc) { $allDead = $false; break }
+        if ($proc) {
+            $allDead = $false
+            break
+        }
     }
     if ($allDead) {
         Write-Host "Port 8000 blocked by orphaned socket (dead process). Ignoring - kernel will release." -ForegroundColor Yellow
@@ -223,10 +225,10 @@ else {
 if (-not $port8000Busy) {
     $backendLogOut = "$env:TEMP\zhorik-backend-out.log"
     $backendLogErr = "$env:TEMP\zhorik-backend-err.log"
-
-    # Удаляем старые логи перед запуском
-    if (Test-Path $backendLogOut) { Remove-Item $backendLogOut -Force }
-    if (Test-Path $backendLogErr) { Remove-Item $backendLogErr -Force }
+    
+    # Очищаем старые логи перед запуском, чтобы не поймать ложный старт
+    if (Test-Path $backendLogOut) { Remove-Item $backendLogOut -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $backendLogErr) { Remove-Item $backendLogErr -Force -ErrorAction SilentlyContinue }
 
     $backendProc = Start-Process -FilePath $venvPy -ArgumentList "-m", "uvicorn", "agent.main:app", "--host", "127.0.0.1", "--port", "8000" -WorkingDirectory "$InstallRoot\backend" -RedirectStandardOutput "$backendLogOut" -RedirectStandardError "$backendLogErr" -PassThru -NoNewWindow
     Write-Host "Backend started (PID $($backendProc.Id)), waiting $HealthTimeout sec..." -ForegroundColor Gray
@@ -236,11 +238,11 @@ if (-not $port8000Busy) {
     $responseStatus = "unknown"
     $startTime = Get-Date
 
-    # Отключаем прокси, чтобы GitHub Actions не блокировал localhost
+    # Отключаем системный прокси, чтобы запросы к localhost шли напрямую (фикс для GitHub Actions)
     [System.Net.WebRequest]::DefaultWebProxy = $null
 
     while ((Get-Date) - $startTime -lt (New-Timespan -Seconds $HealthTimeout)) {
-        # Если процесс упал, ждать нет смысла
+        # Если процесс внезапно упал, нет смысла ждать таймаут
         if ($backendProc.HasExited) {
             Write-Host "Backend process died! Exit code: $($backendProc.ExitCode)" -ForegroundColor Red
             if (Test-Path $backendLogErr) {
@@ -306,6 +308,10 @@ else {
     Write-Result "Health-check /api/health" $false "Skipped - port 8000 blocked by live process"
     Write-Result "No import errors in backend" $false "Skipped - port 8000 blocked by live process"
 }
+
+# ============================================================================
+# 6. Uninstall
+# ============================================================================
 
 # ============================================================================
 # 6. Uninstall
