@@ -39,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: e2e-logs
-          path: ${{ env:TEMP }}\zhorik-*.log
+          path: ${{ runner.temp }}\zhorik-*.log
