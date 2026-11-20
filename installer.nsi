@@ -1,157 +1,89 @@
-; Zhorik-Setup-0.1.0.nsi
-; NSIS installer for DRON X GENIE (Zhorik)
-; Version: 0.1.0
-
+; --- Определения ---
 !define APP_NAME "Zhorik"
 !define APP_VERSION "0.1.0"
-!define APP_PUBLISHER "DRON X GENIE Team"
-!define APP_WEBSITE "https://dronxgenie.com"
-!define INSTALLER_NAME "Zhorik-Setup-0.1.0.exe"
+!define APP_PUBLISHER "DronX Genie"
+!define APP_URL "https://github.com/dronxgenie-byte/dron-x-genie"
 
-!include "MUI2.nsh"
-!include "FileFunc.nsh"
-!include "LogicLib.nsh"
-
-; --- General ---
-Name "${APP_NAME} ${APP_VERSION}"
-OutFile "dist\\${INSTALLER_NAME}"
-InstallDir "$LOCALAPPDATA\\Zhorik"
-InstallDirRegKey HKCU "Software\\${APP_NAME}" "InstallDir"
+Name "${APP_NAME}"
+OutFile "dist\Zhorik-Setup-${APP_VERSION}.exe"
+InstallDir "$LOCALAPPDATA\Zhorik"
 RequestExecutionLevel user
-ShowInstDetails show
+SetCompressor /SOLID lzma
 
-; --- Modern UI ---
-!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
-!define MUI_LICENSEPAGE_TEXT_LICENSELICENSETEXTTOP "Постановление об использовании DRON X GENIE (Zhorik)"
-!define MUI_LICENSEPAGE_TEXT_LICENSELICENSETEXTBOTTOM "Нажимая Далее, вы принимаете условия."
-
+; --- Современный интерфейс ---
+!include "MUI2.nsh"
+!define MUI_ABORTWARNING
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "docs\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
-!insertmacro MUI_UNPAGE_WELCOME
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_UNPAGE_FINISH
-
 !insertmacro MUI_LANGUAGE "Russian"
 
-; --- Variables ---
-Var StartMenuFolder
-Var PreviousInstallDir
-
-; ============================================================================
-; .onInit
-; ============================================================================
-Function .onInit
-    ; Check for previous installation
-    ReadRegStr $PreviousInstallDir HKCU "Software\\${APP_NAME}" "InstallDir"
-    ${If} $PreviousInstallDir != ""
-        MessageBox MB_YESNO|MB_ICONQUESTION \
-            "Обнаружена предыдущая установка в:$\n$PreviousInstallDir$\n$\nУдалить её и установить заново?" \
-            IDYES NoRemovePrevious
-        ; Remove previous installation silently
-        ClearErrors
-        Delete "$PreviousInstallDir\*"
-        RMDir /r "$PreviousInstallDir"
-        DeleteRegKey HKCU "Software\\${APP_NAME}"
-    NoRemovePrevious:
-    ${EndIf}
-FunctionEnd
-
-; ============================================================================
-; Install
-; ============================================================================
-Section "MainSection" SEC_MAIN
+; --- Секция установки ---
+Section "Install"
     SetOutPath "$INSTDIR"
-    SetOutPath "$INSTDIR\backend"
-    File /r "backend\*.py"
-    SetOutPath "$INSTDIR\backend\agent"
-    File /r "backend\agent\*.py"
-    SetOutPath "$INSTDIR\frontend\dist"
-    File /r "frontend\dist\*.*"
-    SetOutPath "$INSTDIR\frontend\dron_ui"
-    File /r "frontend\dron_ui\*.*"
-    SetOutPath "$INSTDIR\scripts"
-    File /r "scripts\*.ps1"
-    File /r "scripts\*.py"
-    SetOutPath "$INSTDIR\prompts"
-    File /r "prompts\*.md"
-    SetOutPath "$INSTDIR\configs"
-    File /r "configs\*.json"
-    SetOutPath "$INSTDIR\css"
-    File /r "css\*.css"
-    SetOutPath "$INSTDIR\js"
-    File /r "js\*.js"
-    SetOutPath "$INSTDIR\data\genie_memory"
-    File /r "data\genie_memory\*"
-    SetOutPath "$INSTDIR\data\logs"
-    File /r "data\logs\*"
-    SetOutPath "$INSTDIR"
-    File /r "requirements.txt"
-    File /r "requirements-core.txt"
-    SetOutPath "$INSTDIR\docs"
-    File /r "docs\*.md"
-    File /r "docs\LICENSE.txt"
-
-    ; Create data directories
-    CreateDirectory "$INSTDIR\data\genie_memory"
-    CreateDirectory "$INSTDIR\data\logs"
-    CreateDirectory "$INSTDIR\data\sync"
-
-    ; Write uninstaller
-    WriteUninstaller "$INSTDIR\uninstall.exe"
-
-    ; Registry
-    WriteRegStr HKCU "Software\\${APP_NAME}" "InstallDir" "$INSTDIR"
-    WriteRegStr HKCU "Software\\${APP_NAME}" "Version" "${APP_VERSION}"
     
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME} ${APP_VERSION}"
+    ; Копируем основные файлы и папки
+    File "requirements.txt"
+    File /r "backend\*.*"
+    File /r "frontend\dist\*.*"
+    File /r "frontend\dron_ui\*.*"
+    File /r "scripts\*.*"
+    File /r "prompts\*.*"
+    File /r "configs\*.*"
+    File /r "css\*.*"
+    File /r "js\*.*"
+    File /r "docs\*.*"
+    
+    ; ИСПРАВЛЕНИЕ ОШИБКИ: Просто создаем папку для логов, не копируя сами логи
+    CreateDirectory "$INSTDIR\data\logs"
+    CreateDirectory "$INSTDIR\data\genie_memory"
+    
+    ; Создаем деинсталлятор
+    WriteUninstaller "$INSTDIR\uninstall.exe"
+    
+    ; Запись в реестр (HKCU - для текущего пользователя)
+    WriteRegStr HKCU "Software\${APP_NAME}" "InstallDir" "$INSTDIR"
+    
+    ; Запись в "Установка и удаление программ"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME}"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "UninstallString" '"$INSTDIR\uninstall.exe"'
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion" "${APP_VERSION}"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "Publisher" "${APP_PUBLISHER}"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "URLInfoAbout" "${APP_WEBSITE}"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "InstallLocation" "$INSTDIR"
-
-    ; Start Menu
+    
+    ; Создание ярлыков (в Пуске и на Рабочем столе)
     CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py"
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
-    CreateShortCut "$SMPROGRAMS\${APP_NAME}\Open Folder.lnk" "$INSTDIR"
-
-    ${GetParameters} $R0
-    ${If} $R0 == "/NOICONS"
-        ; User doesn't want icons
-    ${Else}
-        CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py"
-    ${EndIf}
+    ; Указываем на launcher.py (как требует E2E)
+    CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py" "" "$INSTDIR\scripts\launcher.py" 0 SW_SHOWNORMAL
+    CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py" "" "$INSTDIR\scripts\launcher.py" 0 SW_SHOWNORMAL
 SectionEnd
 
-; ============================================================================
-; Uninstall
-; ============================================================================
+; --- Секция удаления ---
 Section "Uninstall"
-    ; Remove files
-    RMDir /r "$INSTDIR"
+    ; Удаляем файлы
+    RMDir /r "$INSTDIR\backend"
+    RMDir /r "$INSTDIR\frontend"
+    RMDir /r "$INSTDIR\scripts"
+    RMDir /r "$INSTDIR\prompts"
+    RMDir /r "$INSTDIR\configs"
+    RMDir /r "$INSTDIR\css"
+    RMDir /r "$INSTDIR\js"
+    RMDir /r "$INSTDIR\docs"
+    RMDir /r "$INSTDIR\data"
+    
+    Delete "$INSTDIR\requirements.txt"
+    Delete "$INSTDIR\uninstall.exe"
+    RMDir "$INSTDIR"
 
-    ; Remove Start Menu
-    Delete "$SMPROGRAMS\${APP_NAME}\*.*"
+    ; Удаляем ярлыки
+    Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
     RMDir "$SMPROGRAMS\${APP_NAME}"
-
-    ; Remove Desktop shortcut
     Delete "$DESKTOP\${APP_NAME}.lnk"
 
-    ; Remove Registry
-    DeleteRegKey HKCU "Software\${APP_NAME}"
+    ; Чистим реестр
     DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+    DeleteRegKey HKCU "Software\${APP_NAME}"
 SectionEnd
-
-; ============================================================================
-; Finish - no interactive dialog (silent install)
-; ============================================================================
-Function .onInstSuccess
-    ShowWindow $HWNDPARENT ${SW_SHOW}
-FunctionEnd
