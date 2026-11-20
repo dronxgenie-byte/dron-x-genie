@@ -1,0 +1,28 @@
+# ⚠️ ВНИМАНИЕ: Docker + Cloudflare больше НЕ используются для публикации кабины.
+#
+# Домен dronxgenie.com зарегистрирован через PDR/Privacy Protect — нет доступа к NS-серверам.
+# Смена их на Cloudflare невозможна.
+#
+# Рекомендуемый способ публикации — ngrok через PowerShell-скрипт:
+#   powershell -ExecutionPolicy Bypass -File scripts\setup_tunnel.ps1
+#
+# Этот docker-compose.yml оставлен только для локальной разработки фронтенда
+# без туннеля в интернет.
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dronxgenie-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://127.0.0.1:8000
+    networks:
+      - dronxgenie-net
+
+networks:
+  dronxgenie-net:
+    driver: bridge

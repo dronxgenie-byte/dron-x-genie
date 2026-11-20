@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.exe
+*.zip
+tools/
+dist/
+build/
+.kilo/
+*.db
+*.log
+temp_audio/
+
+.env
+.env.*
+*.bak

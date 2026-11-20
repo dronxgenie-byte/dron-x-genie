@@ -1,0 +1,42 @@
+name: E2E Windows Test
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install NSIS
+        shell: powershell
+        run: |
+          winget install NSIS.NSIS
+
+      - name: Build NSIS Installer
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /DVERSION="0.1.0" installer.nsi
+
+      - name: Run E2E Installer Test
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          .\e2e-install.ps1 *>&1 | Tee-Object -FilePath "$env:TEMP\zhorik-e2e-run.log"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Upload E2E Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: ${{ env:TEMP }}\zhorik-*.log

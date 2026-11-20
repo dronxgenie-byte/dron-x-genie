@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JIN - Голосовой Ассистент</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0c29 100%);
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .header {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .header h1 {
+            color: #a855f7;
+            letter-spacing: 2px;
+        }
+
+        .main-interface {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        /* Реактор (Кнопка микрофона) */
+        .reactor-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .reactor-container:active {
+            transform: scale(0.95);
+        }
+
+        .reactor-core {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #e0aaff 0%, #a855f7 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 30px #a855f7, 0 0 60px rgba(168, 85, 247, 0.5);
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        .reactor-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(168, 85, 247, 0.5);
+            border-radius: 50%;
+            animation: spin 4s linear infinite;
+        }
+
+        .reactor-ring::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            /* <-- Исправлено */
+            background: #a855f7;
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        .reactor-container.listening .reactor-core {
+            background: radial-gradient(circle, #ff9e9e 0%, #ef4444 100%);
+            box-shadow: 0 0 30px #ef4444, 0 0 60px rgba(239, 68, 68, 0.5);
+            animation: pulse-red 1s infinite;
+        }
+
+        .reactor-container.speaking .reactor-core {
+            background: radial-gradient(circle, #86efac 0%, #22c55e 100%);
+            box-shadow: 0 0 30px #22c55e, 0 0 60px rgba(34, 197, 94, 0.5);
+            animation: pulse-green 0.5s infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse-red {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .status-text {
+            font-size: 18px;
+            color: #a855f7;
+            margin-bottom: 20px;
+            height: 24px;
+        }
+
+        .chat-log {
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .log-entry {
+            opacity: 0.8;
+        }
+
+        .log-entry.user {
+            color: #e0aaff;
+            text-align: right;
+        }
+
+        .log-entry.jin {
+            color: #86efac;
+            text-align: left;
+        }
+
+        .log-entry.dron {
+            color: #60a5fa;
+            text-align: left;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(168, 85, 247, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🧞 JIN ASSISTANT</h1>
+    </div>
+
+    <div class="main-interface">
+        <div class="status-text" id="statusText">Нажми и говори...</div>
+
+        <div class="reactor-container" id="micBtn" onmousedown="startListening()" onmouseup="stopListening()"
+            ontouchstart="startListening()" ontouchend="stopListening()">
+            <div class="reactor-ring"></div>
+            <div class="reactor-core">🎤</div>
+        </div>
+
+        <div class="chat-log" id="chatLog">
+            <div class="log-entry jin">Джин: Привет, Босс! Я на связи. Говори, я слушаю.</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="quickAsk('Джи, запиши идею: ')">💡 Идея</button>
+            <button class="btn" onclick="quickAsk('Джи, объясни Ване: ')">📚 Ване</button>
+            <button class="btn" onclick="quickAsk('Дрон, покажи файлы: ')">🤖 Дрон</button>
+        </div>
+    </div>
+
+    <script>
+        let recognition;
+        let isListening = false;
+        const micBtn = document.getElementById('micBtn');
+        const statusText = document.getElementById('statusText');
+        const chatLog = document.getElementById('chatLog');
+
+        // Инициализация распознавания речи
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ru-RU';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isListening = true;
+                micBtn.classList.add('listening');
+                statusText.textContent = "Слушаю...";
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                micBtn.classList.remove('listening');
+                statusText.textContent = "Нажми и говори...";
+            };
+
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                addLog(text, 'user');
+                processCommand(text);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Ошибка распознавания:", event.error);
+                statusText.textContent = "Не расслышала, попробуй еще раз.";
+            };
+        } else {
+            statusText.textContent = "Браузер не поддерживает голос. Используй Chrome.";
+        }
+
+        function startListening() {
+            if (recognition && !isListening) recognition.start();
+        }
+
+        function stopListening() {
+            if (recognition && isListening) recognition.stop();
+        }
+
+        function quickAsk(text) {
+            addLog(text, 'user');
+            processCommand(text);
+        }
+
+        function addLog(text, role) {
+            const div = document.createElement('div');
+            div.className = `log-entry ${role}`;
+            const name = role === 'user' ? 'Вы' : (role === 'jin' ? 'Джин' : 'Дрон');
+            div.textContent = `${name}: ${text}`;
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        async function processCommand(text) {
+            statusText.textContent = "Думаю...";
+
+            // Определяем, к кому обращение
+            let agent = 'genie'; // По умолчанию Джин
+            if (text.toLowerCase().includes('дрон')) agent = 'dron';
+
+            const endpoint = agent === 'genie' ? '/core/chat' : '/core/chat';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent: agent,
+                        message: text,
+                        session_id: 'voice_session'
+                    })
+                });
+
+                const data = await response.json();
+                const reply = data.response;
+
+                addLog(reply, agent);
+
+                // ОЗВУЧКА ОТВЕТА (Настоящий эффект Джарвиса)
+                speakText(reply, agent);
+
+            } catch (error) {
+                addLog("Ошибка соединения с сервером", 'jin');
+            } finally {
+                statusText.textContent = "Нажми и говори...";
+            }
+        }
+
+        function speakText(text, agent) {
+            // Убираем JSON и спецсимволы для чистой речи
+            const cleanText = text.replace(/```.*?```/gs, '').replace(/\{.*\}/gs, '').replace(/[*_#]/g, '');
+
+            if ('speechSynthesis' in window) {
+                // Отменяем предыдущую речь, если она была
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 1.1; // Чуть быстрее, как у ассистента
+                utterance.pitch = agent === 'jin' ? 1.2 : 0.9; // Джин повыше, Дрон пониже
+
+                utterance.onstart = () => {
+                    micBtn.classList.add('speaking');
+                    statusText.textContent = "Говорю...";
+                };
+
+                utterance.onend = () => {
+                    micBtn.classList.remove('speaking');
+                    statusText.textContent = "Нажми и говори...";
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+    </script>
+</body>
+
+</html>

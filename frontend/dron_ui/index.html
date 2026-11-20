@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANANISIM OS — DRON × GENIE</title>
+<link rel="stylesheet" href="/static/style.css?v=10">
+</head>
+<body data-theme="neon">
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">DRON <span class="x">×</span> GENIE</span>
+    <span class="brand-sub">ANANISIM OS</span>
+  </div>
+
+  <nav class="apps" role="tablist" aria-label="Приложения">
+    <button class="app-btn is-active" role="tab" aria-selected="true" data-app="stage">🎬 Сцена</button>
+    <button class="app-btn" role="tab" aria-selected="false" data-app="ivan">📚 I.VAN</button>
+    <button class="app-btn" role="tab" aria-selected="false" data-app="bank">🏦 БАНК</button>
+    <button class="app-btn" role="tab" aria-selected="false" data-app="council">🪑 Совет</button>
+  </nav>
+
+  <div class="clock">
+    <span class="clock-date" id="clock-date">—</span>
+    <span class="clock-time" id="clock-time">—</span>
+  </div>
+
+  <div class="topbar-right">
+    <label class="field-inline">
+      <span>Профиль</span>
+      <select id="profile-select" class="control">
+        <option value="dron">👨‍✈️ Дрон</option>
+        <option value="vanja">👦 Ваня</option>
+        <option value="babushka">👵 Хозяйка</option>
+      </select>
+    </label>
+    <button class="control tab-btn" id="toggle-large" title="Крупный режим">⤢</button>
+    <button class="control tab-btn" id="open-settings" title="Настройки">⚙</button>
+  </div>
+</header>
+
+<!-- ============ СЦЕНА: Дрон слева, X по центру, Джин справа ============ -->
+<main class="stage" id="app-stage">
+
+  <aside class="agent-panel" id="panel-dron" aria-label="Панель Дрона">
+    <div class="panel-head">
+      <span class="avatar avatar-dron" aria-hidden="true">🧔</span>
+      <div class="who-block">
+        <span class="agent-name">Дрон</span>
+        <span class="agent-role">локальный · старый боцман</span>
+      </div>
+      <span class="badge" id="badge-dron">—</span>
+      <button class="panel-collapse control tab-btn" data-panel="dron" title="Свернуть панель" aria-label="Свернуть панель Дрона">◀</button>
+    </div>
+    <div class="panel-body">
+      <div class="panel-block">
+        <h3>Состояние</h3>
+        <div id="dron-state" class="mini-rows"><p class="empty">Загрузка…</p></div>
+      </div>
+      <div class="panel-block">
+        <h3>Память</h3>
+        <div id="memory-state" class="mini-rows"><p class="empty">Загрузка…</p></div>
+        <button type="button" class="control" id="compact-memory">Сжать память</button>
+      </div>
+      <div class="panel-block">
+        <h3>Проекты</h3>
+        <p class="empty">Модуль проектов появится позже. Пока — только Vault и чат.</p>
+      </div>
+      <div class="panel-block">
+        <h3>Скилы</h3>
+        <ul class="plain-list">
+          <li>✅ Голос: озвучивание (Руслан)</li>
+          <li>✅ Слух: распознавание речи</li>
+          <li>✅ Чтение Vault</li>
+          <li>⏳ Заметки — этап C</li>
+          <li>⏳ Команды — этап C</li>
+        </ul>
+      </div>
+      <button class="control primary wide" id="ask-dron">Спросить Дрона</button>
+    </div>
+  </aside>
+
+  <section class="x-screen" aria-label="Экран встречи">
+    <div class="x-head">
+      <span class="x-mark">×</span>
+      <span class="x-title" id="x-title">Экран встречи</span>
+      <span class="badge" id="x-target">обращение: по умолчанию</span>
+    </div>
+
+    <div class="chat-log" id="chat-log">
+      <article class="msg msg-dron">
+        <div class="msg-head"><span class="who">Дрон</span><button class="speak-btn" data-speak="1" title="Прослушать">🔈</button></div>
+        <p class="msg-text">Слушаю, Босс. Держи курс. Скажи «Дрон, …» — отвечу я, скажешь «Джинни, …» — ответит она.</p>
+      </article>
+    </div>
+
+    <form class="composer" id="composer">
+      <div class="composer-row">
+        <textarea id="message" rows="2" placeholder="Напиши или скажи… Обращение: «Дрон, …» или «Джинни, …»" aria-label="Сообщение"></textarea>
+        <button type="button" class="control mic" id="mic" title="Голосовой ввод: нажмите и говорите">🎤</button>
+      </div>
+      <div class="composer-actions">
+        <label class="switch">
+          <input type="checkbox" id="autoplay-toggle" checked>
+          <span>Озвучивать</span>
+        </label>
+        <button type="button" class="control" id="lamp" title="Лампа Джина (этап D)" disabled>🪔</button>
+        <button type="submit" class="control primary" id="send">Отправить</button>
+        <button type="button" class="control danger is-hidden" id="stop">Остановить</button>
+      </div>
+    </form>
+    <p class="hint" id="chat-hint">Enter — отправить, Shift+Enter — новая строка. «Дрон, …» — локальный, «Джинни, …» — облачная.</p>
+  </section>
+
+  <aside class="agent-panel right" id="panel-genie" aria-label="Панель Джина">
+    <div class="panel-head">
+      <span class="avatar avatar-genie" aria-hidden="true">🧞</span>
+      <div class="who-block">
+        <span class="agent-name">Джинни</span>
+        <span class="agent-role">облачная · Yandex Realtime</span>
+      </div>
+      <span class="badge" id="badge-genie">—</span>
+      <button class="panel-collapse control tab-btn" data-panel="genie" title="Свернуть панель" aria-label="Свернуть панель Джина">▶</button>
+    </div>
+    <div class="panel-body">
+      <div class="panel-block">
+        <h3>Состояние</h3>
+        <div id="genie-state" class="mini-rows"><p class="empty">Загрузка…</p></div>
+      </div>
+      <div class="panel-block">
+        <h3>Проекты</h3>
+        <p class="empty">Проекты и файлы — через инструменты промпт-агента (в разработке).</p>
+      </div>
+      <div class="panel-block">
+        <h3>Лампа</h3>
+        <p class="empty">Ритуал Лампы — этап D. Голос Джинни уже работает: кнопка 🎙 внизу справа.</p>
+      </div>
+      <button class="control wide" id="ask-genie">Спросить Джина</button>
+    </div>
+  </aside>
+</main>
+
+<!-- ============ I.VAN ============ -->
+<main class="app-view is-hidden" id="app-ivan">
+  <div class="app-head">
+    <h2>📚 I.VAN</h2>
+    <span class="badge" id="ivan-badge">—</span>
+    <p class="app-lead">Учебное приложение Вани: уроки, расписание, задачи, заметки.</p>
+  </div>
+  <div class="app-grid" id="ivan-grid">
+    <p class="empty">Загрузка…</p>
+  </div>
+</main>
+
+<!-- ============ БАНК ============ -->
+<main class="app-view is-hidden" id="app-bank">
+  <div class="app-head">
+    <h2>🏦 БАНК</h2>
+    <span class="badge" id="bank-badge">—</span>
+    <p class="app-lead">Семейный бюджет, взносы, расходы и графики.</p>
+  </div>
+  <div class="app-grid" id="bank-grid">
+    <p class="empty">Загрузка…</p>
+  </div>
+</main>
+
+<!-- ============ СОВЕТ ============ -->
+<main class="app-view is-hidden" id="app-council">
+  <div class="app-head">
+    <h2>🪑 Семейный совет</h2>
+    <span class="badge" id="badge-council">—</span>
+    <p class="app-lead" id="council-lead">Загрузка повестки…</p>
+  </div>
+  <div class="app-grid" id="council-grid">
+    <p class="empty">Загрузка…</p>
+  </div>
+</main>
+
+<!-- ============ Настройки ============ -->
+<aside class="drawer is-hidden" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+  <div class="drawer-panel">
+    <div class="card-head">
+      <h2 id="drawer-title">Настройки</h2>
+      <button class="control tab-btn" id="close-settings" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="drawer-body">
+      <label class="field"><span>Тема</span>
+        <select id="set-theme" class="control">
+          <option value="neon">Неон</option>
+          <option value="genie">Джинн</option>
+        </select>
+      </label>
+      <label class="field"><span>Агент по умолчанию (без обращения)</span>
+        <select id="set-default-agent" class="control">
+          <option value="dron">Дрон (локальный)</option>
+          <option value="genie">Джин (облачный)</option>
+        </select>
+      </label>
+      <label class="field"><span>Масштаб текста: <span id="scale-value">1.0</span>×</span>
+        <input type="range" id="set-scale" min="1" max="1.8" step="0.05" value="1">
+      </label>
+      <label class="field"><span>Температура Дрона: <span id="temp-value">0.35</span> (меньше — суше)</span>
+        <input type="range" id="set-temperature" min="0" max="1" step="0.05" value="0.35">
+      </label>
+      <label class="switch"><input type="checkbox" id="set-duet"><span>Если не указал имя — отвечают оба (Джин, затем Дрон с резюме)</span></label>
+      <label class="switch"><input type="checkbox" id="set-panels"><span>Свернуть боковые панели до иконок</span></label>
+      <label class="field"><span>Голос Дрона</span>
+        <select id="set-voice" class="control"></select>
+      </label>
+      <label class="field"><span>Понижение тона: 0.88 — грубее, 1.0 — как есть</span>
+        <input type="range" id="set-pitch" min="0.7" max="1.0" step="0.01">
+      </label>
+      <label class="switch"><input type="checkbox" id="set-autoplay"><span>Автопроизнесение ответов</span></label>
+      <label class="switch"><input type="checkbox" id="set-animation"><span>Анимация</span></label>
+      <label class="switch"><input type="checkbox" id="set-large"><span>Крупный режим</span></label>
+      <div class="field"><span>Диагностика</span>
+        <pre class="diag" id="diag">—</pre>
+      </div>
+      <div class="field"><span>Связь</span>
+        <pre class="diag" id="comms-state">—</pre>
+        <select id="comms-channel">
+          <option value="telegram">Telegram</option>
+          <option value="max">MAX</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="phone">Телефон (СМС)</option>
+        </select>
+        <input type="text" id="comms-to" placeholder="кому: номер или chat_id">
+        <input type="text" id="comms-text" placeholder="текст сообщения">
+        <button type="button" class="control" id="comms-send">Отправить</button>
+        <button type="button" class="control" id="comms-call">Позвонить</button>
+        <button type="button" class="control danger" id="clear-chat">Очистить чат</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ============ ПАНЕЛЬ УПРАВЛЕНИЯ (быстрые настройки) ============ -->
+<div class="control-panel" id="control-panel" aria-hidden="true">
+  <div class="panel-grid">
+    <div class="panel-item"><span class="panel-label">Агент</span><span class="panel-value" id="cp-agent">Дрон</span></div>
+    <div class="panel-item"><span class="panel-label">Голос</span><span class="panel-value" id="cp-voice">—</span></div>
+    <div class="panel-item"><span class="panel-label">Тон</span><span class="panel-value" id="cp-pitch">—</span></div>
+    <div class="panel-item"><span class="panel-label">Температура</span><span class="panel-value" id="cp-temp">—</span></div>
+    <div class="panel-item"><span class="panel-label">Автоголос</span><span class="panel-value" id="cp-autoplay">—</span></div>
+    <div class="panel-item"><span class="panel-label">Память</span><span class="panel-value" id="cp-memory">—</span></div>
+  </div>
+  <div class="panel-actions">
+    <button type="button" class="bar-btn" id="cp-settings">⚙ Настройки</button>
+    <button type="button" class="bar-btn" id="cp-compact">🗜 Сжать память</button>
+  </div>
+</div>
+
+<!-- ============ НИЖНИЙ БАР ============ -->
+<footer class="bottom-bar" id="bottom-bar">
+  <div class="bar-section">
+    <button type="button" class="bar-btn is-active" id="bar-dron" title="Обращаться к Дрону (локальный)">🧔 Дрон</button>
+    <button type="button" class="bar-btn" id="bar-genie" title="Обращаться к Джин (облачный)">🧞 Джин</button>
+    <button type="button" class="bar-btn" id="bar-x" title="X-агент — экспериментальный">✕ X</button>
+  </div>
+  <div class="bar-divider"></div>
+  <div class="bar-section">
+    <span class="bar-status" id="bar-status">готов</span>
+  </div>
+  <div class="bar-divider"></div>
+  <div class="bar-section">
+    <button type="button" class="bar-btn" id="bar-hear" title="Слух: распознавание речи">👂 Слух</button>
+    <button type="button" class="bar-btn" id="bar-voice" title="Голос: озвучивание ответов">🔊 Голос</button>
+    <button type="button" class="bar-btn" id="bar-panel" title="Быстрая панель управления" aria-expanded="false">⚙ Панель</button>
+  </div>
+</footer>
+
+<script src="/static/diag.js?v=10"></script>
+<script src="/static/app.js?v=10"></script>
+<script src="/static/genie_voice.js?v=5"></script>
+</body>
+</html>

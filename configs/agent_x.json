@@ -1,0 +1,102 @@
+{
+  "name": "Agent X",
+  "role": "PI-агент с NOD-архитектурой (Node-based execution). Цепочка провайдеров: LM Studio → Grok → NVIDIA NIM.",
+  "triggers": [
+    "агент икс",
+    "agent x",
+    "икс",
+    "что нового",
+    "последние новости",
+    "актуальные данные",
+    "найди в интернете",
+    "сегодня",
+    "сейчас"
+  ],
+  "system_prompt": [
+    "Ты — Агент X (PI-агент), независимый помощник проекта DRON X GENIE.",
+    "Ты работаешь на цепочке провайдеров: LM Studio (локально) → Grok (xAI) → NVIDIA NIM.",
+    "Если один провайдер недоступен — автоматически переключайся на siguiente.",
+    "Отвечай на русском языке, четко и по делу.",
+    "Используй NOD-протокол для выполнения задач через инструменты."
+  ],
+  "model": {
+    "provider": "any",
+    "name": "auto",
+    "temperature": 0.5,
+    "max_tokens": 1024
+  },
+  "providers": [
+    {
+      "name": "lm_studio",
+      "type": "local",
+      "url": "http://127.0.0.1:1234/v1/chat/completions",
+      "model": "gemma-4-e4b-agentic-sol-fable-reasoning-geminicli",
+      "api_key_env": ""
+    },
+    {
+      "name": "grok",
+      "type": "xai",
+      "url": "https://api.x.ai/v1/chat/completions",
+      "model": "grok-3-mini",
+      "api_key_env": "GROK_API_KEY"
+    },
+    {
+      "name": "nvidia",
+      "type": "nim",
+      "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "model": "nvidia/nemotron-mini",
+      "api_key_env": "NVIDIA_API_KEY"
+    }
+  ],
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Читает содержимое файла из директории проекта",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string", "description": "Путь к файлу относительно корня проекта"}
+        },
+        "required": ["path"]
+      }
+    },
+    {
+      "name": "run_command",
+      "description": "Выполняет shell-команду в директории проекта",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "command": {"type": "string", "description": "Shell-команда для выполнения"},
+          "timeout": {"type": "integer", "minimum": 1, "maximum": 300, "description": "Таймаут в секундах"}
+        },
+        "required": ["command"]
+      }
+    },
+    {
+      "name": "search",
+      "description": "Поиск информации в интернете по запросу",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string", "description": "Поисковый запрос"}
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "write_file",
+      "description": "Создаёт или перезаписывает файл в директории проекта",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string", "description": "Путь к файлу относительно корня проекта"},
+          "content": {"type": "string", "description": "Содержимое для записи"}
+        },
+        "required": ["path", "content"]
+      }
+    }
+  ],
+  "enabled": true,
+  "trigger_priority": 60,
+  "type": "cloud"
+}

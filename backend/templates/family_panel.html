@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRON X GENIE — Семейная панель</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 1400px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 15px;
+            height: 95vh;
+            max-height: 900px;
+        }
+
+        /* Боковые панели */
+        .side-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+
+        .side-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .side-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .side-panel::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .panel-header {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2a5298;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header.dron {
+            color: #2a5298;
+        }
+
+        .panel-header.genie {
+            color: #8e44ad;
+        }
+
+        .collapsible {
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .collapsible-header {
+            background: #f0f2f5;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            background: #e0e0e0;
+        }
+
+        .collapsible-header::after {
+            content: '▼';
+            font-size: 0.7em;
+            transition: transform 0.3s;
+        }
+
+        .collapsible-header.active::after {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 12px;
+        }
+
+        .collapsible-content.show {
+            max-height: 400px;
+            padding: 10px 12px;
+        }
+
+        .info-item {
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            color: #333;
+            word-break: break-word;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .status-badge.online {
+            background: #27ae60;
+            color: white;
+        }
+
+        .status-badge.offline {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .agent-controls {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .agent-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 15px;
+            font-size: 0.8em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .agent-btn.mic {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .agent-btn.mic:hover {
+            background: #c0392b;
+        }
+
+        .agent-btn.mic.recording {
+            animation: pulse 1s infinite;
+        }
+
+        .agent-btn.speaker {
+            background: #27ae60;
+            color: white;
+        }
+
+        .agent-btn.speaker:hover {
+            background: #229954;
+        }
+
+        .agent-btn.speaker.muted {
+            background: #95a5a6;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 8px rgba(231, 76, 60, 0);
+            }
+        }
+
+        /* Центральная панель (чат) */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .chat-header h1 {
+            color: #1e3c72;
+            font-size: 1.3em;
+        }
+
+        .chat-header h1 span {
+            color: #2a5298;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.boss {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.dron {
+            background: #e8f4f8;
+            color: #333;
+            border: 1px solid #b0d4e3;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.genie {
+            background: #f0e8f8;
+            color: #333;
+            border: 1px solid #d4b0e3;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .sender {
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .message .text {
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-mic {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-mic:hover:not(:disabled) {
+            background: #c0392b;
+        }
+
+        .btn-mic.recording {
+            animation: pulse 1s infinite;
+        }
+
+        .btn-speaker {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-speaker:hover:not(:disabled) {
+            background: #229954;
+        }
+
+        .btn-speaker.muted {
+            background: #95a5a6;
+        }
+
+        .btn-send {
+            background: #2a5298;
+            color: white;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            background: #1e3c72;
+        }
+
+        .text-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.9em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .text-input:focus {
+            border-color: #2a5298;
+        }
+
+        .status-bar {
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: #f0f2f5;
+            border-radius: 6px;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #95a5a6;
+        }
+
+        .status.active .status-dot {
+            background: #27ae60;
+            animation: blink 1s infinite;
+        }
+
+        .status.thinking .status-dot {
+            background: #f39c12;
+            animation: blink 0.5s infinite;
+        }
+
+        .status.error .status-dot {
+            background: #e74c3c;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .side-panel {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Левая панель: ДРОН -->
+        <div class="side-panel">
+            <div class="panel-header dron">🤖 ДРОН</div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Статус</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-label">Состояние:</div>
+                        <div class="info-value"><span class="status-badge online">Онлайн</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Сервер:</div>
+                        <div class="info-value">Локальный (LM Studio)</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Порт:</div>
+                        <div class="info-value">8888</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Модели</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-label">Мозг (LLM):</div>
+                        <div class="info-value">Gemma 4 E4B</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Уши (STT):</div>
+                        <div class="info-value">Qwen3-ASR 1.7B</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Рот (TTS):</div>
+                        <div class="info-value">Kokoro-82M (alloy)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Промпт</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-value" style="font-size: 0.8em; line-height: 1.3;">
+                            Ты — ДРОН, технический ассистент. Отвечай кратко, по делу. Обращайся "Босс". Отвечай только
+                            когда обращаются к тебе напрямую или вопрос технический. Наблюдай за диалогом с Джинни.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Скилы</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-value">• Код и автоматизация</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Работа с файлами</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Obsidian интеграция</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• n8n workflow</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Проекты</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-value">• DRON X GENIE</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Семейная автоматизация</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Настройки</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-label">Температура:</div>
+                        <div class="info-value">0.7</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Max токенов:</div>
+                        <div class="info-value">500</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="agent-controls">
+                <button class="agent-btn mic" id="dronMicBtn" onclick="toggleAgentMic('dron')">
+                    🎤 Слух
+                </button>
+                <button class="agent-btn speaker" id="dronSpeakerBtn" onclick="toggleAgentSpeaker('dron')">
+                    🔊 Голос
+                </button>
+            </div>
+        </div>
+
+        <!-- Центральная панель: ЧАТ -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <h1>DRON <span>X</span> GENIE</h1>
+                <button class="btn" onclick="clearChat()"
+                    style="background: #e74c3c; color: white; padding: 6px 12px; font-size: 0.85em;">🗑️
+                    Очистить</button>
+            </div>
+
+            <div class="chat-container" id="chatContainer">
+                <div class="message dron">
+                    <div class="sender">ДРОН</div>
+                    <div class="text">Привет, Босс! Я Дрон — локальный ассистент. Обращайся ко мне по имени для
+                        технических вопросов.</div>
+                </div>
+                <div class="message genie">
+                    <div class="sender">ДЖИННИ</div>
+                    <div class="text">Привет! Я Джинни — семейный ассистент. Помогу с бытовыми вопросами, детьми,
+                        рецептами!</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-mic" id="micBtn" onclick="toggleRecording()">
+                    <span id="micIcon"></span>
+                    <span id="micText">Говорить</span>
+                </button>
+
+                <button class="btn btn-speaker" id="speakerBtn" onclick="toggleSpeaker()">
+                    <span id="speakerIcon">🔊</span>
+                    <span id="speakerText">Голос вкл</span>
+                </button>
+
+                <input type="text" class="text-input" id="textInput" placeholder="Или напиши сообщение..."
+                    onkeypress="handleKeyPress(event)">
+
+                <button class="btn btn-send" onclick="sendText()">
+                    <span></span>
+                    <span>Отправить</span>
+                </button>
+            </div>
+
+            <div class="status-bar" id="status">
+                <div class="status-dot"></div>
+                <span id="statusText">Готов к работе</span>
+            </div>
+        </div>
+
+        <!-- Правая панель: ДЖИННИ -->
+        <div class="side-panel">
+            <div class="panel-header genie">🧞 ДЖИННИ</div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Статус</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-label">Состояние:</div>
+                        <div class="info-value"><span class="status-badge online">Онлайн</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Сервер:</div>
+                        <div class="info-value">Yandex AI Studio</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">API ключ:</div>
+                        <div class="info-value" style="font-size: 0.75em;">Настроен</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Модели</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-label">Мозг (LLM):</div>
+                        <div class="info-value">YandexGPT Pro / Alice</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Уши (STT):</div>
+                        <div class="info-value">Yandex SpeechKit</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Рот (TTS):</div>
+                        <div class="info-value">Yandex SpeechKit (Jane)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Промпт</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-value" style="font-size: 0.8em; line-height: 1.3;">
+                            Ты — ДЖИННИ, дружелюбный семейный ассистент. Отвечай тепло, с заботой. Помогай с бытовыми
+                            вопросами, детьми, рецептами. Обращайся "Босс".
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Скилы</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-value">• Семейные вопросы</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Помощь с детьми</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Рецепты и советы</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Расписание и напоминания</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Проекты</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-value">• Обучение Вани</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-value">• Семейный календарь</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">Настройки</div>
+                <div class="collapsible-content">
+                    <div class="info-item">
+                        <div class="info-label">Модель:</div>
+                        <div class="info-value">alice/latest</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Голос:</div>
+                        <div class="info-value">Jane (тёплый)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="agent-controls">
+                <button class="agent-btn mic" id="genieMicBtn" onclick="toggleAgentMic('genie')">
+                    🎤 Слух
+                </button>
+                <button class="agent-btn speaker" id="genieSpeakerBtn" onclick="toggleAgentSpeaker('genie')">
+                    🔊 Голос
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let speakerEnabled = true;
+        let currentAgent = 'dron';
+
+        // Состояние кнопок для каждого агента
+        let agentMicState = { dron: false, genie: false };
+        let agentSpeakerState = { dron: true, genie: true };
+
+        function toggleCollapsible(header) {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            content.classList.toggle('show');
+        }
+
+        function toggleAgentMic(agent) {
+            agentMicState[agent] = !agentMicState[agent];
+            const btn = document.getElementById(`${agent}MicBtn`);
+
+            if (agentMicState[agent]) {
+                btn.classList.add('recording');
+                btn.innerHTML = '️ Слушаю';
+                setStatus(`${agent === 'dron' ? 'Дрон' : 'Джинни'} слушает...`, 'active');
+            } else {
+                btn.classList.remove('recording');
+                btn.innerHTML = '🎤 Слух';
+                setStatus('Готов к работе', '');
+            }
+        }
+
+        function toggleAgentSpeaker(agent) {
+            agentSpeakerState[agent] = !agentSpeakerState[agent];
+            const btn = document.getElementById(`${agent}SpeakerBtn`);
+
+            if (agentSpeakerState[agent]) {
+                btn.classList.remove('muted');
+                btn.innerHTML = '🔊 Голос';
+            } else {
+                btn.classList.add('muted');
+                btn.innerHTML = '🔇 Тихо';
+            }
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 16000
+                    }
+                });
+
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm'
+                });
+
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await sendVoiceChat(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                document.getElementById('micBtn').classList.add('recording');
+                document.getElementById('micIcon').textContent = '⏹️';
+                document.getElementById('micText').textContent = 'Остановить';
+                setStatus('Идёт запись... говори', 'active');
+
+            } catch (error) {
+                console.error('Ошибка доступа к микрофону:', error);
+                setStatus('Ошибка: нет доступа к микрофону', 'error');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+
+            isRecording = false;
+
+            document.getElementById('micBtn').classList.remove('recording');
+            document.getElementById('micIcon').textContent = '🎤';
+            document.getElementById('micText').textContent = 'Говорить';
+            setStatus('Обработка...', 'thinking');
+        }
+
+        async function sendVoiceChat(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio_file', audioBlob, 'recording.webm');
+            formData.append('agent', currentAgent);
+
+            try {
+                const response = await fetch('/api/voice_chat', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+
+                addMessage(data.user_text, 'boss');
+                addMessage(data.assistant_text, currentAgent);
+
+                if (speakerEnabled && data.audio_url) {
+                    playAudio(data.audio_url);
+                }
+
+                setStatus('Готов к работе', '');
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                setStatus('Ошибка при обработке голоса', 'error');
+            }
+        }
+
+        async function sendText() {
+            const textInput = document.getElementById('textInput');
+            const text = textInput.value.trim();
+
+            if (!text) return;
+
+            addMessage(text, 'boss');
+            textInput.value = '';
+            setStatus('Думает...', 'thinking');
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        agent: currentAgent
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+                addMessage(data.response, currentAgent);
+                setStatus('Готов к работе', '');
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                setStatus('Ошибка при отправке сообщения', 'error');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendText();
+        }
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+
+            let senderClass = sender;
+            let senderName = sender.toUpperCase();
+
+            if (sender === 'boss') {
+                senderClass = 'boss';
+                senderName = 'БОСС';
+            } else if (sender === 'dron') {
+                senderClass = 'dron';
+                senderName = 'ДРОН';
+            } else if (sender === 'genie') {
+                senderClass = 'genie';
+                senderName = 'ДЖИННИ';
+            } else if (sender === 'system') {
+                senderClass = 'dron';
+                senderName = 'СИСТЕМА';
+            }
+
+            messageDiv.className = `message ${senderClass}`;
+
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'sender';
+            senderDiv.textContent = senderName;
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'text';
+            textDiv.textContent = text;
+
+            messageDiv.appendChild(senderDiv);
+            messageDiv.appendChild(textDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function playAudio(audioUrl) {
+            const audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = audioUrl;
+            audioPlayer.play().catch(e => console.error('Ошибка воспроизведения:', e));
+            setStatus('Говорит...', 'active');
+
+            audioPlayer.onended = () => {
+                setStatus('Готов к работе', '');
+            };
+        }
+
+        function toggleSpeaker() {
+            speakerEnabled = !speakerEnabled;
+            const btn = document.getElementById('speakerBtn');
+            const icon = document.getElementById('speakerIcon');
+            const text = document.getElementById('speakerText');
+
+            if (speakerEnabled) {
+                btn.classList.remove('muted');
+                icon.textContent = '🔊';
+                text.textContent = 'Голос вкл';
+            } else {
+                btn.classList.add('muted');
+                icon.textContent = '🔇';
+                text.textContent = 'Голос выкл';
+            }
+        }
+
+        function clearChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = `
+                <div class="message dron">
+                    <div class="sender">ДРОН</div>
+                    <div class="text">Чат очищен. Готов к новым задачам, Босс.</div>
+                </div>
+            `;
+        }
+
+        function setStatus(text, type) {
+            const statusEl = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            statusEl.className = 'status ' + type;
+            statusText.textContent = text;
+        }
+    </script>
+</body>
+
+</html>
