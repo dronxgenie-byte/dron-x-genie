@@ -27,7 +27,7 @@ Section "Install"
     SetOutPath "$INSTDIR"
     
     ; Копируем основные файлы
-    File "requirements.txt"
+    File "requirements.txt"`r`n    File "requirements-core.txt"
     
     ; КОПИРУЕМ ПАПКИ ЦЕЛИКОМ (без \*.*), чтобы сохранить структуру
     File /r "backend"
