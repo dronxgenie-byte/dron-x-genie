@@ -165,6 +165,7 @@ if ($setupExitCode -eq 0) {
     Write-Result "setup_env.ps1 completed" $true "exit code = 0"
 }
 else {
+    +
     Write-Result "setup_env.ps1 failed" $false "exit code = $setupExitCode, see $setupLog"
 }
 
@@ -193,10 +194,7 @@ if ($conns8000) {
     $allDead = $true
     foreach ($c in $conns8000) {
         $proc = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
-        if ($proc) {
-            $allDead = $false
-            break
-        }
+        if ($proc) { $allDead = $false; break }
     }
     if ($allDead) {
         Write-Host "Port 8000 blocked by orphaned socket (dead process). Ignoring - kernel will release." -ForegroundColor Yellow
@@ -225,33 +223,55 @@ else {
 if (-not $port8000Busy) {
     $backendLogOut = "$env:TEMP\zhorik-backend-out.log"
     $backendLogErr = "$env:TEMP\zhorik-backend-err.log"
+
+    # Удаляем старые логи перед запуском
+    if (Test-Path $backendLogOut) { Remove-Item $backendLogOut -Force }
+    if (Test-Path $backendLogErr) { Remove-Item $backendLogErr -Force }
+
     $backendProc = Start-Process -FilePath $venvPy -ArgumentList "-m", "uvicorn", "agent.main:app", "--host", "127.0.0.1", "--port", "8000" -WorkingDirectory "$InstallRoot\backend" -RedirectStandardOutput "$backendLogOut" -RedirectStandardError "$backendLogErr" -PassThru -NoNewWindow
     Write-Host "Backend started (PID $($backendProc.Id)), waiting $HealthTimeout sec..." -ForegroundColor Gray
 
     $healthUrl = "http://127.0.0.1:8000/api/health"
     $healthOk = $false
+    $responseStatus = "unknown"
     $startTime = Get-Date
 
-    # Wait for backend startup message in log (more reliable than Invoke-RestMethod)
+    # Отключаем прокси, чтобы GitHub Actions не блокировал localhost
+    [System.Net.WebRequest]::DefaultWebProxy = $null
+
     while ((Get-Date) - $startTime -lt (New-Timespan -Seconds $HealthTimeout)) {
+        # Если процесс упал, ждать нет смысла
+        if ($backendProc.HasExited) {
+            Write-Host "Backend process died! Exit code: $($backendProc.ExitCode)" -ForegroundColor Red
+            if (Test-Path $backendLogErr) {
+                Write-Host "--- Backend Error Log ---" -ForegroundColor Yellow
+                Get-Content $backendLogErr -Tail 20 | Write-Host
+            }
+            break
+        }
+
         Start-Sleep -Seconds 2
+
+        # 1. Проверяем лог на успешный старт (самый надежный способ)
         if (Test-Path $backendLogOut) {
             $startupMsg = Select-String -Path $backendLogOut -Pattern "Application startup complete|Uvicorn running on" -ErrorAction SilentlyContinue
             if ($startupMsg) {
                 $healthOk = $true
+                $responseStatus = "started (log match)"
                 break
             }
         }
-        # Also try HTTP health-check as fallback
+
+        # 2. Пробуем HTTP запрос (с увеличенным таймаутом)
         try {
-            $response = Invoke-RestMethod -Uri $healthUrl -Method GET -TimeoutSec 2 -ErrorAction Stop
-            $respStatus = $response.status
-            if ($respStatus -in @("ok", "degraded")) {
+            $response = Invoke-RestMethod -Uri $healthUrl -Method GET -TimeoutSec 10 -ErrorAction Stop
+            if ($response.status -in @("ok", "degraded")) {
                 $healthOk = $true
+                $responseStatus = $response.status
                 break
             }
             else {
-                Write-Host "Health-check returned status: $respStatus" -ForegroundColor Yellow
+                Write-Host "Health-check returned status: $($response.status)" -ForegroundColor Yellow
             }
         }
         catch {
@@ -260,10 +280,10 @@ if (-not $port8000Busy) {
     }
 
     if ($healthOk) {
-        Write-Result "Health-check /api/health" $true "Response: $response | < $HealthTimeout sec"
+        Write-Result "Health-check /api/health" $true "Status: $responseStatus"
     }
     else {
-        Write-Result "Health-check /api/health" $false "Backend not responding after $HealthTimeout sec"
+        Write-Result "Health-check /api/health" $false "Backend not responding or crashed after $HealthTimeout sec"
     }
 
     if (Test-Path $backendLogOut) {
@@ -283,8 +303,8 @@ if (-not $port8000Busy) {
     catch {}
 }
 else {
-    Write-Result "Health-check /api/health" $false "Skipped - port 8000 blocked by orphaned socket"
-    Write-Result "No import errors in backend" $false "Skipped - port 8000 blocked by orphaned socket"
+    Write-Result "Health-check /api/health" $false "Skipped - port 8000 blocked by live process"
+    Write-Result "No import errors in backend" $false "Skipped - port 8000 blocked by live process"
 }
 
 # ============================================================================
