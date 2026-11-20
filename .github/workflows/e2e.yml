@@ -20,7 +20,7 @@ jobs:
       - name: Install NSIS
         shell: powershell
         run: |
-          winget install NSIS.NSIS
+          choco install nsis -y
 
       - name: Build NSIS Installer
         shell: powershell
