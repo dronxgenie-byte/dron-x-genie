@@ -1,180 +1,101 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRON × GENIE - Desktop</title>
-    <link rel="stylesheet" href="css/desktop.css">
-</head>
-<body>
-    <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-    <header class="top-bar">
-        <div class="logo"> DRON × GENIE</div>
-        <div class="app-icons">
-            <button class="app-icon active" data-app="chat" title="Чат">💬</button>
-            <button class="app-icon" data-app="calendar" title="Календарь">📅</button>
-            <button class="app-icon" data-app="map" title="Карта">🗺️</button>
-            <button class="app-icon" data-app="finance" title="Финансы"></button>
-            <button class="app-icon" data-app="school" title="Школа"></button>
-            <button class="app-icon" data-app="settings" title="Настройки">⚙️</button>
-        </div>
-        <div class="system-info">
-            <span id="clock">12:00:00</span>
-        </div>
-    </header>
+; --- Определения ---
+!define APP_NAME "Zhorik"
+!define APP_VERSION "0.1.0"
+!define APP_PUBLISHER "DronX Genie"
+!define APP_URL "https://github.com/dronxgenie-byte/dron-x-genie"
 
-    <!-- РАБОЧАЯ ОБЛАСТЬ -->
-    <main class="desktop">
-        <!-- ЧАТ -->
-        <div id="chat-window" class="app-window active">
-            <div class="chat-container">
-                <div class="chat-messages" id="chat-messages">
-                    <div class="message system">
-                        <strong>X-ROUTER:</strong> Система готова. Агенты: Дрон (локальный), Джин (облачный). X координирует маршрутизацию.
-                    </div>
-                </div>
-                <div class="chat-input-area">
-                    <div class="agent-selector">
-                        <button class="agent-btn active" data-agent="dron">🤖 Дрон</button>
-                        <button class="agent-btn" data-agent="x" style="border-color: #8b5cf6;">❌ X-Router</button>
-                        <button class="agent-btn" data-agent="jin">️ Джин</button>
-                    </div>
-                    <textarea id="chat-input" placeholder="Напишите сообщение..."></textarea>
-                    <button id="send-btn" class="send-btn">Отправить</button>
-                </div>
-            </div>
-        </div>
+Name "${APP_NAME}"
+OutFile "dist\Zhorik-Setup-${APP_VERSION}.exe"
+InstallDir "$LOCALAPPDATA\Zhorik"
+RequestExecutionLevel user
+SetCompressor /SOLID lzma
 
-        <!-- Другие приложения -->
-        <div id="calendar-window" class="app-window"><div class="window-content">📅 Календарь</div></div>
-        <div id="map-window" class="app-window"><div class="window-content">️ Карта</div></div>
-        <div id="finance-window" class="app-window"><div class="window-content">📊 Финансы</div></div>
-        <div id="school-window" class="app-window"><div class="window-content">🎓 Школа (Ваня)</div></div>
-        <div id="settings-window" class="app-window"><div class="window-content">⚙️ Настройки</div></div>
+; --- Современный интерфейс ---
+!include "MUI2.nsh"
+!define MUI_ABORTWARNING
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
 
-        <!-- МОДАЛЬНОЕ ОКНО ДРОНА -->
-        <div id="dron-panel" class="agent-panel">
-            <div class="panel-header">
-                <h2>🤖 ДРОН — Локальный агент</h2>
-                <button class="close-panel" onclick="closePanel('dron')">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="info-section">
-                    <h3> Состояние</h3>
-                    <div class="info-grid">
-                        <div class="info-item"><span>Модель:</span> <strong>gemma-4-e4b</strong></div>
-                        <div class="info-item"><span>Статус:</span> <strong class="status-ready">Готов</strong></div>
-                        <div class="info-item"><span>Платформа:</span> <code>LM Studio</code></div>
-                        <div class="info-item"><span>Память:</span> <strong>875 симв.</strong></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_LANGUAGE "Russian"
 
-        <!-- МОДАЛЬНОЕ ОКНО X-ROUTER -->
-        <div id="x-panel" class="agent-panel x-panel">
-            <div class="panel-header">
-                <h2>❌ X-ROUTER — Координатор</h2>
-                <button class="close-panel" onclick="closePanel('x')">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="info-section">
-                    <h3>🔄 Маршрутизация</h3>
-                    <div class="info-grid">
-                        <div class="info-item"><span>Активный агент:</span> <strong id="x-active-agent">Дрон</strong></div>
-                        <div class="info-item"><span>Режим:</span> <strong>Ручной</strong></div>
-                        <div class="info-item"><span>Запросов:</span> <strong>22</strong></div>
-                        <div class="info-item"><span>API:</span> <strong>http://localhost:8001</strong></div>
-                    </div>
-                </div>
-                <div class="info-section">
-                    <h3> Подключения</h3>
-                    <div class="connection-list">
-                        <div class="connection-item ready">
-                            <span>🤖 Дрон (LM Studio)</span>
-                            <span class="status-badge">Онлайн</span>
-                        </div>
-                        <div class="connection-item ready">
-                            <span>☁️ Джин (Yandex)</span>
-                            <span class="status-badge">Онлайн</span>
-                        </div>
-                        <div class="connection-item">
-                            <span> Obsidian Vault</span>
-                            <span class="status-badge warning">Синхронизация</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="info-section">
-                    <h3>⚡ Быстрые действия</h3>
-                    <div class="quick-actions">
-                        <button class="action-btn" onclick="switchAgent('dron')">Переключить на Дрона</button>
-                        <button class="action-btn" onclick="switchAgent('jin')">Переключить на Джина</button>
-                        <button class="action-btn" onclick="updateMemory()">🔄 Обновить память</button>
-                        <button class="action-btn" onclick="clearChat()">🗑️ Очистить чат</button>
-                    </div>
-                </div>
-                <div class="info-section">
-                    <h3>📊 Лог маршрутизации</h3>
-                    <div class="route-log" id="route-log">
-                        <div class="log-entry"><span class="log-time">12:50:38</span> <span class="log-text">X-Router запущен</span></div>
-                        <div class="log-entry"><span class="log-time">12:50:40</span> <span class="log-text">Подключен Дрон (localhost:1234)</span></div>
-                        <div class="log-entry"><span class="log-time">12:50:42</span> <span class="log-text">Подключен Джин (Yandex API)</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+; --- Секция установки ---
+Section "Install"
+SetOutPath "$INSTDIR"
 
-        <!-- МОДАЛЬНОЕ ОКНО ДЖИНА -->
-        <div id="jin-panel" class="agent-panel">
-            <div class="panel-header">
-                <h2>☁️ ДЖИН — Облачный агент</h2>
-                <button class="close-panel" onclick="closePanel('jin')">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="info-section">
-                    <h3> Состояние</h3>
-                    <div class="info-grid">
-                        <div class="info-item"><span>Платформа:</span> <strong>Yandex GPT</strong></div>
-                        <div class="info-item"><span>Статус:</span> <strong class="status-ready">Готов</strong></div>
-                        <div class="info-item"><span>Модель:</span> <strong>yandexgpt-lite</strong></div>
-                        <div class="info-item"><span>API:</span> <strong>Настроен</strong></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+; Копируем файлы зависимостей (ОБА файла обязательны!)
+File "requirements.txt"
+File "requirements-core.txt"
 
-    <!-- НИЖНИЙ ПУЛЬТ УПРАВЛЕНИЯ -->
-    <footer class="bottom-bar">
-        <!-- ДРОН (слева) -->
-        <div class="agent-control-group" onclick="openPanel('dron')">
-            <span class="agent-name">🤖 ДРОН</span>
-            <div class="agent-indicator ready"></div>
-        </div>
+; Копируем папки целиком
+File /r "backend"
+File /r "frontend"
+File /r "scripts"
+File /r "prompts"
+File /r "configs"
+File /r "css"
+File /r "js"
+File /r "docs"
 
-        <!-- X-ROUTER (посередине) -->
-        <div class="x-router-control" onclick="openPanel('x')">
-            <span class="x-label">X</span>
-            <div class="x-indicator active"></div>
-        </div>
+; Создаем пустые папки для данных
+CreateDirectory "$INSTDIR\data\logs"
+CreateDirectory "$INSTDIR\data\genie_memory"
 
-        <!-- ЦЕНТРАЛЬНЫЕ КОНТРОЛЫ -->
-        <div class="main-controls">
-            <button class="control-btn" id="mic-btn" title="Голосовой ввод">🎤</button>
-            <button class="control-btn" id="speak-btn" title="Озвучить">🔊</button>
-            <button class="control-btn" id="listen-btn" title="Слушать">👂</button>
-            <div class="volume-control-main">
-                <input type="range" min="0" max="100" value="80" id="main-volume">
-            </div>
-        </div>
+; Создаем деинсталлятор
+WriteUninstaller "$INSTDIR\uninstall.exe"
 
-        <!-- ДЖИН (справа) -->
-        <div class="agent-control-group" onclick="openPanel('jin')">
-            <span class="agent-name">☁️ ДЖИН</span>
-            <div class="agent-indicator ready"></div>
-        </div>
-    </footer>
+; Запись в реестр (HKCU - для текущего пользователя)
+WriteRegStr HKCU "Software\${APP_NAME}" "InstallDir" "$INSTDIR"
 
-    <script src="js/desktop.js"></script>
-</body>
-</html>
+; Запись в "Установка и удаление программ"
+WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME}"
+WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "UninstallString"
+'"$INSTDIR\uninstall.exe"'
+WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion" "${APP_VERSION}"
+WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "Publisher" "${APP_PUBLISHER}"
+
+; Создание ярлыков (в Пуске и на Рабочем столе)
+CreateDirectory "$SMPROGRAMS\${APP_NAME}"
+CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py" ""
+"$INSTDIR\scripts\launcher.py" 0 SW_SHOWNORMAL
+CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py" "" "$INSTDIR\scripts\launcher.py" 0
+SW_SHOWNORMAL
+SectionEnd
+
+; --- Секция удаления ---
+Section "Uninstall"
+; Убиваем процессы, если они висят
+nsExec::Exec 'taskkill /f /im python.exe'
+
+; Удаляем папки, включая созданную venv
+RMDir /r "$INSTDIR\.venv"
+RMDir /r "$INSTDIR\backend"
+RMDir /r "$INSTDIR\frontend"
+RMDir /r "$INSTDIR\scripts"
+RMDir /r "$INSTDIR\prompts"
+RMDir /r "$INSTDIR\configs"
+RMDir /r "$INSTDIR\css"
+RMDir /r "$INSTDIR\js"
+RMDir /r "$INSTDIR\docs"
+RMDir /r "$INSTDIR\data"
+
+; Удаляем файлы
+Delete "$INSTDIR\requirements.txt"
+Delete "$INSTDIR\requirements-core.txt"
+Delete "$INSTDIR\uninstall.exe"
+
+; Принудительно удаляем корневую папку
+RMDir /r "$INSTDIR"
+
+; Удаляем ярлыки
+Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
+RMDir "$SMPROGRAMS\${APP_NAME}"
+Delete "$DESKTOP\${APP_NAME}.lnk"
+
+; Чистим реестр
+DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+DeleteRegKey HKCU "Software\${APP_NAME}"
+SectionEnd
