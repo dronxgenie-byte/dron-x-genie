@@ -1,4 +1,5 @@
 name: E2E Windows Test
+
 on:
   push:
     branches: [ master ]
@@ -9,8 +10,10 @@ jobs:
   e2e:
     runs-on: windows-latest
     timeout-minutes: 60
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -18,13 +21,23 @@ jobs:
           python-version: '3.12'
 
       - name: Install NSIS
-        shell: powershell
+        run: choco install nsis -y
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Frontend
+        working-directory: ./frontend
         run: |
-          choco install nsis -y
+          npm install
+          npm run build
 
       - name: Build NSIS Installer
         shell: powershell
         run: |
+          New-Item -ItemType Directory -Force -Path dist
           & "C:\Program Files (x86)\NSIS\makensis.exe" /DVERSION="0.1.0" installer.nsi
 
       - name: Run E2E Installer Test
@@ -38,5 +51,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-logs
+          name: E2E-Logs
           path: ${{ runner.temp }}\zhorik-*.log
