@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEWIAR · Space</title>
+<script type="module" src="js/model-viewer.min.js"></script>
+<link rel="stylesheet" href="css/welcome.css">
+<link rel="shortcut icon" href="img/favicon.png" type="image/x-icon" id="favicon">
+<link rel="preload" href="img/1-v1.glb" as="fetch" crossorigin="anonymous">
+</head>
+<body>
+<div class="vignette"></div>
+<div class="grain"></div>
+<div class="mark tl"></div><div class="mark tr"></div>
+<div class="mark bl"></div><div class="mark br"></div>
+<div class="sys">Second Brain · AI System</div>
+
+<div id="page">
+
+  <div class="model-wrap">
+    <div class="model-glow"></div>
+    <model-viewer src="img/1-v1.glb" poster="img/p.webp" alt="Neural Brain" auto-rotate="" auto-rotate-delay="0" rotation-per-second="8deg" camera-controls="" disable-zoom="" interaction-prompt="none" shadow-intensity="0" exposure="0.7" style="filter: saturate(0.3) brightness(1.4);" ar-status="not-presenting"></model-viewer>
+  </div>
+
+  <div class="title">
+    <h1>DEWIAR<span>space</span></h1>
+    <div class="tag">Second Brain · Knowledge Core · AI System</div>
+  </div>
+
+  <div class="enter-wrap">
+    <a href="#" class="enter" id="enter-btn">Войти в систему</a>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div class="box">
+    <button class="xb" id="xb">✕</button>
+    <div class="bt">Доступ</div>
+    <div class="bs">DEWIAR · Cognitive Core · Secure Session</div>
+    <form method="POST" action="/login">
+      <div class="f">
+        <label>Идентификатор</label>
+        <input type="text" name="login" placeholder="user_id" autocomplete="off" spellcheck="false" style="">
+      </div>
+      <div class="f">
+        <label>Ключ доступа</label>
+        <input type="password" name="password" placeholder="············" style="">
+      </div>
+      <button type="submit" class="sb">Войти →</button>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('enter-btn').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.querySelector('.f input').focus(), 80);
+});
+document.getElementById('xb').addEventListener('click', () =>
+  document.getElementById('modal').classList.remove('open'));
+document.getElementById('modal').addEventListener('click', e => {
+  if(e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
+});
+</script>
+
+
+</body></html>

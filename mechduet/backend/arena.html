@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МЕХАДУЭТ: Арена</title>
+    <style>
+        body {
+            background-color: #1A1A1A;
+            color: #E0E0E0;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .arena {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .robot {
+            width: 150px;
+            height: 150px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .robot.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        #atlas {
+            background: linear-gradient(135deg, #2C3E50, #3498DB);
+            border: 3px solid #BDC3C7;
+            color: #BDC3C7;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+        }
+
+        #orbita {
+            background: linear-gradient(135deg, #E67E22, #F39C12);
+            border: 3px solid #F1C40F;
+            color: #F1C40F;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .dialogue-box {
+            background-color: #2C2C2C;
+            margin: 0 20px 20px 20px;
+            padding: 20px;
+            border-radius: 15px;
+            min-height: 120px;
+            border: 1px solid #444;
+            font-size: 18px;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        .speaker {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .speaker-atlas {
+            color: #3498DB;
+        }
+
+        .input-panel {
+            display: flex;
+            padding: 20px;
+            gap: 10px;
+            background-color: #252525;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            background-color: #1A1A1A;
+            color: white;
+            outline: none;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        #sendBtn {
+            background-color: #3498DB;
+            color: white;
+        }
+
+        #micBtn {
+            background-color: #444;
+            color: #888;
+            width: 60px;
+            padding: 15px 0;
+        }
+
+        #micBtn.recording {
+            background-color: #E74C3C;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .thinking {
+            font-style: italic;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="arena">
+        <div id="atlas" class="robot">АТЛАС</div>
+        <div id="orbita" class="robot">ОРБИТА</div>
+    </div>
+    <div class="dialogue-box" id="dialogueBox">
+        <span class="speaker speaker-atlas">Атлас:</span>
+        <span id="responseText">Система готова. Задай вопрос, Ваня.</span>
+    </div>
+    <div class="input-panel">
+        <button id="micBtn" title="Голосовой ввод">🎤</button>
+        <input type="text" id="userInput" placeholder="Напиши вопрос здесь..."
+            onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="sendBtn" onclick="sendMessage()">Отправить</button>
+    </div>
+    <script>
+        const API_URL = "http://127.0.0.1:8001";
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        async function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const question = inputField.value.trim();
+            if (!question) return;
+
+            document.getElementById('atlas').classList.add('active');
+            document.getElementById('responseText').innerHTML = '<span class="thinking">Атлас обрабатывает запрос...</span>';
+            inputField.value = '';
+
+            try {
+                const response = await fetch(`${API_URL}/ask?question=${encodeURIComponent(question)}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('responseText').innerText = data.answer;
+                    // Попытка озвучить
+                    try {
+                        const audioResp = await fetch(`${API_URL}/api/tts?text=${encodeURIComponent(data.answer)}&robot=atlas`);
+                        if (audioResp.ok) {
+                            const blob = await audioResp.blob();
+                            new Audio(URL.createObjectURL(blob)).play();
+                        }
+                    } catch (e) { console.log("TTS недоступен"); }
+                } else {
+                    document.getElementById('responseText').innerText = "Ошибка: " + data.answer;
+                }
+            } catch (error) {
+                document.getElementById('responseText').innerText = "❌ Ошибка сети. Сервер не отвечает.";
+            } finally {
+                document.getElementById('atlas').classList.remove('active');
+            }
+        }
+
+        async function startVoiceRecording() {
+            if (isRecording) return;
+            isRecording = true;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'voice.webm');
+
+                    document.getElementById('responseText').innerText = '🎤 Распознаю речь...';
+
+                    try {
+                        const response = await fetch(`${API_URL}/api/voice`, { method: 'POST', body: formData });
+                        const data = await response.json();
+
+                        if (data.status === 'success' && data.text) {
+                            document.getElementById('userInput').value = data.text;
+                            setTimeout(() => sendMessage(), 300);
+                        } else {
+                            document.getElementById('responseText').innerText = "Не распознано: " + (data.answer || "попробуй громче");
+                        }
+                    } catch (error) {
+                        document.getElementById('responseText').innerText = "Ошибка отправки аудио";
+                    } finally {
+                        isRecording = false;
+                        document.getElementById('micBtn').classList.remove('recording');
+                    }
+                };
+
+                mediaRecorder.start();
+                document.getElementById('micBtn').classList.add('recording');
+                document.getElementById('responseText').innerText = '🎤 Говори... (5 сек)';
+
+                setTimeout(() => {
+                    if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+                }, 5000);
+
+            } catch (error) {
+                alert("Нет доступа к микрофону. Разреши в браузере.");
+                isRecording = false;
+            }
+        }
+
+        document.getElementById('micBtn').onclick = startVoiceRecording;
+    </script>
+</body>
+
+</html>
