@@ -26,19 +26,20 @@ SetCompressor /SOLID lzma
 Section "Install"
     SetOutPath "$INSTDIR"
     
-    ; Копируем основные файлы и папки
+    ; Копируем основные файлы
     File "requirements.txt"
-    File /r "backend\*.*"
-    File /r "frontend\dist\*.*"
-    File /r "frontend\dron_ui\*.*"
-    File /r "scripts\*.*"
-    File /r "prompts\*.*"
-    File /r "configs\*.*"
-    File /r "css\*.*"
-    File /r "js\*.*"
-    File /r "docs\*.*"
     
-    ; ИСПРАВЛЕНИЕ ОШИБКИ: Просто создаем папку для логов, не копируя сами логи
+    ; КОПИРУЕМ ПАПКИ ЦЕЛИКОМ (без \*.*), чтобы сохранить структуру
+    File /r "backend"
+    File /r "frontend"
+    File /r "scripts"
+    File /r "prompts"
+    File /r "configs"
+    File /r "css"
+    File /r "js"
+    File /r "docs"
+    
+    ; Создаем пустые папки для данных
     CreateDirectory "$INSTDIR\data\logs"
     CreateDirectory "$INSTDIR\data\genie_memory"
     
@@ -56,7 +57,7 @@ Section "Install"
     
     ; Создание ярлыков (в Пуске и на Рабочем столе)
     CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-    ; Указываем на launcher.py (как требует E2E)
+    ; Теперь ярлык будет ссылаться на правильный путь внутри папки scripts
     CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py" "" "$INSTDIR\scripts\launcher.py" 0 SW_SHOWNORMAL
     CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\scripts\launcher.py" "" "$INSTDIR\scripts\launcher.py" 0 SW_SHOWNORMAL
 SectionEnd
