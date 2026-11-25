@@ -28,3 +28,13 @@ backend/archive/
 project_structure.txt
 *.lnk
 *DEPRECATED*
+
+# рантайм-артефакты файлового моста (примеры — task.example.json)
+nod_bridge/task.json
+nod_bridge/result.json
+
+# пользовательские/рантайм-данные — не публиковать
+# (там же лежат backend/data/.vault_password и nod_vault.json — секреты)
+backend/data/
+data/genie_memory/
+backend/feedback.json

@@ -50,8 +50,10 @@ nod_bridge/
 ## Как запустить монитор NOD
 
 ```bash
-python tools/nod_monitor.py
+python backend/nod_monitor.py
 ```
+
+> Путь именно `backend/nod_monitor.py` — папка `tools/` в `.gitignore` и в свежем клоне её нет.
 
 Монитор следит за `nod_bridge/task.json`. При появлении задачи выводит в консоль:
 
@@ -110,4 +112,11 @@ npm run dev
 ```powershell
 Stop-Process -Id $(Get-Content $env:TEMP\dronxgenie-ngrok.pid)
 ```
+
+## Безопасность (правила репозитория)
+
+- **`.env` и `backend/data/.vault_password` / `backend/data/nod_vault.json` никогда не коммитятся** — они в `.gitignore`.
+- `.env.example` — только плейсхолдеры, реальных ключей там быть не должно.
+- Мастер-пароль хранилища читается из переменной `NOD_VAULT_PASSWORD` либо из `backend/data/.vault_password` (локально).
+- Если секрет всё же попал в git — удалять из HEAD недостаточно: нужна ротация ключа у поставщика и перезапись истории (`git filter-repo` + `push --force`).
 
