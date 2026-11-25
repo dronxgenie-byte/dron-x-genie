@@ -102,7 +102,7 @@ async def check_provider_key(
         }
 
     key_row = keys[0]
-    decrypted_key = get_key(f"{provider_name}:{key_row['id']}")
+    decrypted_key = get_key(f"{provider_name}:{key_row['key_name']}")
     if not decrypted_key:
         return {
             "provider": provider_name,
