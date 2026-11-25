@@ -13,4 +13,18 @@ temp_audio/
 
 .env
 .env.*
+!.env.example
 *.bak
+
+# --- секреты: никогда не коммитить ---
+backend/data/.vault_password
+backend/data/nod_vault.json
+
+# --- локальное / вложенные репозитории / IDE ---
+.vscode/
+nod/
+deepseek-harness/
+backend/archive/
+project_structure.txt
+*.lnk
+*DEPRECATED*
